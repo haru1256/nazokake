@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="">
+  <title>なぞかけのアノテーション</title>
+  <script>
+    var lines = [];
+    var currentIndex = 0;
+    var heartsVisible = false; // 心を見るボタンが押されたかどうかのフラグ
+    var displayHeart = 10;
+
+    var timedoutId;
+
+    function init() {
+      var file = document.querySelector('#getfile');
+      var fileButton = document.querySelector('#fileButton');
+      // input 変化時に読み込む
+      file.onchange = function() {
+        var fileList = file.files;
+        var reader = new FileReader();
+        reader.readAsText(fileList[0]);
+        // 読み込み後表示
+        reader.onload = function() {
+          lines = reader.result.split('\n');
+          currentIndex = 1;
+          displayData();
+          startHeartTimer();
+          fileButton.style.display = 'none'; // ファイルを選択するボタンを非表示にする
+        };
+      };
+      // ファイル選択ボタンの表示を制御
+      fileButton.style.display = 'block'; // 初期表示ではボタンを表示する
+    };
+
+    // CSVの行をパースしてデータをオブジェクトに格納する関数
+    function parseCSVLine(line) {
+      var values = line.split(',');
+      var data = {
+        theme: values[0],
+        solution: values[1],
+        heart1: values[2],
+        heart2: values[3],
+        extraExpression: values[4],
+        compatibility: values[5] || '',
+        surprise: values[6] || ''
+      };
+      return data;
+    }
+
+    function displayData() {
+      if (currentIndex < lines.length) {
+        var line = lines[currentIndex].trim();
+        var data = parseCSVLine(line);
+        if (data.compatibility) {
+          currentIndex++;
+          displayData();
+          return;
+        }
+        var nazokakeText = `${data.theme}とかけて${data.solution}ととく．その心は${data.heart1}/${data.heart2} ${data.extraExpression}`;
+        var nazokakeText2 = `${data.theme}とかけて${data.solution}ととく．その心は?`;
+        var nazokakeText3 = '終わりです．CSVファイルをダウンロードボタンを押して終了してください'
+
+        var nazokakeElement = document.querySelector('#nazokake');
+
+        // 心を見るボタンが押されていない場合は、nazokakeText2 を表示
+        if (heartsVisible) {
+          nazokakeElement.textContent = nazokakeText;
+          document.getElementById('nextButton').style.display = 'none';
+          document.getElementById('saveButton').style.display = 'block';
+          document.getElementById('compatibilityLabel').style.display = 'block';
+          document.getElementById('compatibility').style.display = 'block';
+          document.getElementById('surpriseLabel').style.display = 'block';
+          document.getElementById('surprise').style.display = 'block';
+          document.getElementById('heartButton').style.display = 'none';
+          document.getElementById('downloadButton').style.display = 'none';
+          document.getElementById('downloadButton2').style.display = 'none';
+        } else {
+          if (!data.theme) {
+            nazokakeElement.textContent = nazokakeText3;
+            document.getElementById('heartButton').style.display = 'none';
+            document.getElementById('nextButton').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'none';
+            document.getElementById('compatibilityLabel').style.display = 'none';
+            document.getElementById('compatibility').style.display = 'none';
+            document.getElementById('surpriseLabel').style.display = 'none';
+            document.getElementById('surprise').style.display = 'none';
+            document.getElementById('downloadButton').style.display = 'block';
+            document.getElementById('downloadButton2').style.display = 'none';
+
+            stopHeartTimer();
+          } else {
+            nazokakeElement.textContent = nazokakeText2;
+            document.getElementById('heartButton').style.display = 'block';
+            document.getElementById('nextButton').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'none';
+            document.getElementById('compatibilityLabel').style.display = 'none';
+            document.getElementById('compatibility').style.display = 'none';
+            document.getElementById('surpriseLabel').style.display = 'none';
+            document.getElementById('surprise').style.display = 'none';
+            document.getElementById('downloadButton2').style.display = 'none';
+          }
+        }
+
+        var compatibilitySelect = document.querySelector('#compatibility');
+        var surpriseSelect = document.querySelector('#surprise');
+        compatibilitySelect.value = data.compatibility;
+        surpriseSelect.value = data.surprise;
+      }
+    }
+    // 心を見るボタンを押したときの処理
+    function showHearts() {
+      heartsVisible = true;
+      displayData();
+      document.getElementById('heartButton').style.display = 'none';
+      clearTimeout(timeoutId);
+    }
+    // タイマーを開始する関数
+    function startHeartTimer() {
+      timeoutId = setTimeout(function() {
+        if (!heartsVisible) {
+          // 心を見るボタンが押されなかった場合、自動的に心を見たことにする
+          showHearts();
+        }
+      }, displayHeart * 1000);
+    }
+    // 心を見るボタンの状態をリセットする関数
+    function resetHeartButton() {
+      heartsVisible = false;
+    }
+
+    // 次の行のデータを表示する関数
+    function showNextLine() {
+      currentIndex++;
+      resetHeartButton();
+      displayData();
+      clearTimeout(timeoutId); // タイマーをリセット
+      startHeartTimer();
+    }
+
+    // 適合性と意外性の値を保存する関数
+    function saveValues() {
+      var compatibilityValue = document.querySelector('#compatibility').value;
+      var surpriseValue = document.querySelector('#surprise').value;
+
+      if (!compatibilityValue) {
+        alert('適合性の値を入力してください');
+        return;
+      }
+      if (compatibilityValue == 2 && !surpriseValue) {
+        alert('意外性の値を入力してください');
+        return;
+      }
+
+      if (currentIndex < lines.length) {
+        var line = lines[currentIndex].trim();
+        var data = parseCSVLine(line);
+        data.compatibility = compatibilityValue;
+        data.surprise = surpriseValue;
+
+        var updatedLine = `${data.theme},${data.solution},${data.heart1},${data.heart2},${data.extraExpression},${data.compatibility},${data.surprise}`;
+        lines[currentIndex] = updatedLine;
+        document.getElementById('nextButton').style.display = 'block';
+        document.getElementById('downloadButton2').style.display = 'block';
+        document.getElementById('saveButton').style.display = 'none';
+      }
+    }
+    function stopHeartTimer() {
+      clearTimeout(timerId); // タイマーを停止
+    }
+    function downloadCSV() {
+      var csvContent = lines.join('\n');
+      var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      var downloadLink = document.createElement('a');
+      downloadLink.href = URL.createObjectURL(blob);
+      downloadLink.download = 'annotated_data.csv';
+      downloadLink.click();
+    }
+  </script>
+</head>
+<body onload="init();">
+  <input type="file" id="getfile" accept="text/*">
+  <div>
+    <h2>なぞかけのデータ</h2>
+    <p id="nazokake"></p>
+  </div>
+  <h2 id="compatibilityLabel" style="display:none;">適合性の評価</h2>
+
+  <label for="compatibility" style="display:none;">適合性：</label>
+  <select id="compatibility" name="compatibility" style="display:none;">
+    <option value="1">1</option>
+    <option value="2">2</option>
+  </select>
+
+  <h2 id="surpriseLabel" style="display:none;">意外性の評価</h2>
+
+  <label for="surprise" style="display:none;">意外性：</label>
+  <select id="surprise" name="surprise" style="display:none;">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+  </select>
+
+  <button id="nextButton" onclick="showNextLine()" style="display:none;">次の行</button>
+  <button id="saveButton" onclick="saveValues()" style="display:none;">値を保存する</button>
+  <button id="heartButton" onclick="showHearts()">心を見る</button>
+
+  <button id="downloadButton" onclick="downloadCSV()" style="display:none;">CSVファイルをダウンロード</button>
+  <button id="downloadButton2" onclick="downloadCSV()" style="display:none;">ここで中断(CSVファイルをダウンロードする)</button>
+</body>
+</html>
