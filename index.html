@@ -41,8 +41,9 @@
         heart1: values[2],
         heart2: values[3],
         extraExpression: values[4],
-        compatibility: values[5] || '',
-        surprise: values[6] || ''
+        validity: values[5] || '',
+        funny: values[6] || '',
+        surprise: values[7] || ''
       };
       return data;
     }
@@ -51,7 +52,7 @@
       if (currentIndex < lines.length) {
         var line = lines[currentIndex].trim();
         var data = parseCSVLine(line);
-        if (data.compatibility) {
+        if (data.funny) {
           currentIndex++;
           displayData();
           return;
@@ -61,14 +62,18 @@
         var nazokakeText3 = '終わりです．CSVファイルをダウンロードボタンを押して終了してください'
 
         var nazokakeElement = document.querySelector('#nazokake');
-
+        var fontSize = "40px"
         // 心を見るボタンが押されていない場合は、nazokakeText2 を表示
         if (heartsVisible) {
+          nazokakeElement.style.fontSize = fontSize;
           nazokakeElement.textContent = nazokakeText;
+          document.getElementById('nazokakedata').style.display = 'block';
           document.getElementById('nextButton').style.display = 'none';
           document.getElementById('saveButton').style.display = 'block';
-          document.getElementById('compatibilityLabel').style.display = 'block';
-          document.getElementById('compatibility').style.display = 'block';
+          document.getElementById('validityLabel').style.display = 'block';
+          document.getElementById('validity').style.display = 'block';
+          document.getElementById('funnyLabel').style.display = 'block';
+          document.getElementById('funny').style.display = 'block';
           document.getElementById('surpriseLabel').style.display = 'block';
           document.getElementById('surprise').style.display = 'block';
           document.getElementById('heartButton').style.display = 'none';
@@ -76,12 +81,16 @@
           document.getElementById('downloadButton2').style.display = 'none';
         } else {
           if (!data.theme) {
+            nazokakeElement.style.fontSize = fontSize;
             nazokakeElement.textContent = nazokakeText3;
+            document.getElementById('nazokakedata').style.display = 'block';
             document.getElementById('heartButton').style.display = 'none';
             document.getElementById('nextButton').style.display = 'none';
             document.getElementById('saveButton').style.display = 'none';
-            document.getElementById('compatibilityLabel').style.display = 'none';
-            document.getElementById('compatibility').style.display = 'none';
+            document.getElementById('validityLabel').style.display = 'none';
+            document.getElementById('validity').style.display = 'none';
+            document.getElementById('funnyLabel').style.display = 'none';
+            document.getElementById('funny').style.display = 'none';
             document.getElementById('surpriseLabel').style.display = 'none';
             document.getElementById('surprise').style.display = 'none';
             document.getElementById('downloadButton').style.display = 'block';
@@ -89,21 +98,27 @@
 
             stopHeartTimer();
           } else {
+            nazokakeElement.style.fontSize = fontSize;
             nazokakeElement.textContent = nazokakeText2;
+            document.getElementById('nazokakedata').style.display = 'block';
             document.getElementById('heartButton').style.display = 'block';
             document.getElementById('nextButton').style.display = 'none';
             document.getElementById('saveButton').style.display = 'none';
-            document.getElementById('compatibilityLabel').style.display = 'none';
-            document.getElementById('compatibility').style.display = 'none';
+            document.getElementById('validityLabel').style.display = 'none';
+            document.getElementById('validity').style.display = 'none';
+            document.getElementById('funnyLabel').style.display = 'none';
+            document.getElementById('funny').style.display = 'none';
             document.getElementById('surpriseLabel').style.display = 'none';
             document.getElementById('surprise').style.display = 'none';
             document.getElementById('downloadButton2').style.display = 'none';
           }
         }
 
-        var compatibilitySelect = document.querySelector('#compatibility');
+        var validitySelect = document.querySelector('#validity');
+        var funnySelect = document.querySelector('#funny');
         var surpriseSelect = document.querySelector('#surprise');
-        compatibilitySelect.value = data.compatibility;
+        validitySelect.value = data.validity;
+        funnySelect.value = data.funny;
         surpriseSelect.value = data.surprise;
       }
     }
@@ -139,25 +154,27 @@
 
     // 適合性と意外性の値を保存する関数
     function saveValues() {
-      var compatibilityValue = document.querySelector('#compatibility').value;
+      var validityValue = document.querySelector('#validity').value;
+      var funnyValue = document.querySelector('#funny').value;
       var surpriseValue = document.querySelector('#surprise').value;
 
-      if (!compatibilityValue) {
-        alert('適合性の値を入力してください');
+      if (!validityValue) {
+        alert('意味がわかるなぞかけであるかの欄を入力してください');
         return;
       }
-      if (compatibilityValue == 2 && !surpriseValue) {
-        alert('意外性の値を入力してください');
+      if (validityValue == 'はい' && (!funnyValue || !surpriseValue)) {
+        alert('すべての欄を入力してください');
         return;
       }
 
       if (currentIndex < lines.length) {
         var line = lines[currentIndex].trim();
         var data = parseCSVLine(line);
-        data.compatibility = compatibilityValue;
+        data.validity = validityValue;
+        data.funny = funnyValue;
         data.surprise = surpriseValue;
 
-        var updatedLine = `${data.theme},${data.solution},${data.heart1},${data.heart2},${data.extraExpression},${data.compatibility},${data.surprise}`;
+        var updatedLine = `${data.theme},${data.solution},${data.heart1},${data.heart2},${data.extraExpression},${data.validity},${data.funny},${data.surprise}`;
         lines[currentIndex] = updatedLine;
         document.getElementById('nextButton').style.display = 'block';
         document.getElementById('downloadButton2').style.display = 'block';
@@ -180,30 +197,38 @@
 <body onload="init();">
   <a href="annotation_example.csv" download>サンプルアノテーションCSVファイルをダウンロード</a>
   <input type="file" id="getfile" accept="text/*">
-  <div>
+  <div id="nazokakedata" style="display:none;">
     <h2>なぞかけのデータ</h2>
     <p id="nazokake"></p>
   </div>
-  <h2 id="compatibilityLabel" style="display:none;">適合性の評価</h2>
+  <h2 id="validityLabel" style="display:none;">意味がわかるなぞかけであるか</h2>
 
-  <label for="compatibility" style="display:none;">適合性：</label>
-  <select id="compatibility" name="compatibility" style="display:none;">
-    <option value="1">1</option>
-    <option value="2">2</option>
+  <label for="validity" style="display:none;">意味のわかるなぞかけですか</label>
+  <select id="validity" name="validity" style="display:none;">
+    <option value="いいえ">いいえ</option>
+    <option value="はい">はい</option>
+  </select>
+
+  <h2 id="funnyLabel" style="display:none;">面白いと感じられるなぞかけであるか</h2>
+
+  <label for="funny" style="display:none;">面白いと感じられるなぞかけでしたか</label>
+  <select id="funny" name="funny" style="display:none;">
+    <option value="いいえ">いいえ</option>
+    <option value="はい">はい</option>
   </select>
 
   <h2 id="surpriseLabel" style="display:none;">意外性の評価</h2>
 
   <label for="surprise" style="display:none;">意外性：</label>
   <select id="surprise" name="surprise" style="display:none;">
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
+    <option value="低">低</option>
+    <option value="中">中</option>
+    <option value="高">高</option>
   </select>
 
   <button id="nextButton" onclick="showNextLine()" style="display:none;">次の行</button>
   <button id="saveButton" onclick="saveValues()" style="display:none;">値を保存する</button>
-  <button id="heartButton" onclick="showHearts()">心を見る</button>
+  <button id="heartButton" onclick="showHearts()" style="display:none;">心を見る</button>
 
   <button id="downloadButton" onclick="downloadCSV()" style="display:none;">CSVファイルをダウンロード</button>
   <button id="downloadButton2" onclick="downloadCSV()" style="display:none;">ここで中断(CSVファイルをダウンロードする)</button>
